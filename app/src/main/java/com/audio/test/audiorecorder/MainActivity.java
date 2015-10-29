@@ -1,23 +1,20 @@
 package com.audio.test.audiorecorder;
 
-import android.app.Activity;
+import android.content.Context;
 import android.media.MediaPlayer;
 import android.media.MediaRecorder;
-
 import android.net.Uri;
 import android.os.Bundle;
 import android.os.CountDownTimer;
 import android.os.Environment;
-
 import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
+import android.view.Display;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
-import android.view.animation.Animation;
-import android.view.animation.AnimationUtils;
+import android.view.WindowManager;
 import android.widget.Button;
-
 import android.widget.ImageView;
 import android.widget.MediaController;
 import android.widget.RelativeLayout;
@@ -25,7 +22,6 @@ import android.widget.TextView;
 import android.widget.Toast;
 import android.widget.VideoView;
 
-import java.io.File;
 import java.io.IOException;
 
 public class MainActivity extends AppCompatActivity {
@@ -33,9 +29,11 @@ public class MainActivity extends AppCompatActivity {
     Button play, stop, record;
     private MediaRecorder myAudioRecorder;
     private MediaController mediacontroller;
+    MediaPlayer m;
     private String outputFile = null;
     private VideoView videoView;
     private ImageView thumbnail;
+    private RelativeLayout outerLayout;
     private RelativeLayout thumbnailLayout;
     private TextView secondsTextView;
 
@@ -48,12 +46,25 @@ public class MainActivity extends AppCompatActivity {
         stop = (Button) findViewById(R.id.button2);
         record = (Button) findViewById(R.id.button);
         videoView = (VideoView) findViewById(R.id.video_view);
+        outerLayout = (RelativeLayout) findViewById(R.id.video_view_layout);
         thumbnailLayout = (RelativeLayout) findViewById(R.id.replay_layout);
         thumbnail = (ImageView) findViewById(R.id.video_screen_thumbnail);
         secondsTextView = (TextView) findViewById(R.id.seconds_text);
         thumbnail.setImageResource(R.drawable.thumbnail);
         videoView.setVisibility(View.GONE);
         thumbnailLayout.setVisibility(View.VISIBLE);
+
+        WindowManager wm = (WindowManager) getSystemService(Context.WINDOW_SERVICE);
+        Display display = wm.getDefaultDisplay();
+        int screenWidth = display.getWidth(); // ((display.getWidth()*20)/100)
+
+        RelativeLayout.LayoutParams lp = new RelativeLayout.LayoutParams(
+                screenWidth, screenWidth );
+        outerLayout.setLayoutParams(lp);
+
+        /*imageOne = (ImageView) itemView.findViewById(R.id.imageOne);
+        imageOne.getLayoutParams().height = screenWidth / 3;
+        imageOne.getLayoutParams().width = screenWidth / 3;*/
 
         record.setEnabled(true);
         stop.setEnabled(false);
@@ -86,7 +97,7 @@ public class MainActivity extends AppCompatActivity {
                 record.setEnabled(false);
                 stop.setEnabled(false);
                 play.setEnabled(true);
-                Toast.makeText(getApplicationContext(), "Audio recorded successfully", Toast.LENGTH_LONG).show();
+//                Toast.makeText(getApplicationContext(), "Audio recorded successfully", Toast.LENGTH_LONG).show();
             }
         });
 
@@ -98,6 +109,7 @@ public class MainActivity extends AppCompatActivity {
                 record.setEnabled(false);
                 stop.setEnabled(false);
                 play.setEnabled(false);
+                secondsTextView.setVisibility(View.GONE);
                 startAudio();
             }
         });
@@ -146,7 +158,7 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void startAudio(){
-        MediaPlayer m = new MediaPlayer();
+        m = new MediaPlayer();
         try {
             m.setDataSource(outputFile);
             startVideo();
@@ -222,6 +234,12 @@ public class MainActivity extends AppCompatActivity {
         stop.setEnabled(false);
         play.setEnabled(false);
         countDowntimer.cancel();
+
+        if(m != null){
+            m.stop();
+            m.release();
+            m = null;
+        }
         super.onPause();
     }
 
@@ -242,6 +260,7 @@ public class MainActivity extends AppCompatActivity {
     CountDownTimer countDowntimer = new CountDownTimer(30000, 1000) {
         public void onTick(long millisUntilFinished) {
             int seconds = (int)  millisUntilFinished/1000;
+            secondsTextView.setVisibility(View.VISIBLE);
             secondsTextView.setText(""+seconds+" second");
         }
 
